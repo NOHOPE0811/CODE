@@ -17,12 +17,20 @@ MOSI - 23
 #define RST 14
 #define DI0 27
 
-#define BUTTON 0
-
 String readingID;
-String du_lieu;
-String inString = "";
-String Mess = "";
+String Keyword = "@";
+String ID_Gateway = "*";
+int OP = 20;
+int counterout = 0;
+
+void cauhinh();
+
+void LoRa_sendMessage()
+{
+  LoRa.beginPacket();   // start packet
+  LoRa.print("@");  // add payload
+  LoRa.endPacket(true); // finish packet and send it
+}
 
 void setup()
 {
@@ -37,38 +45,47 @@ void setup()
     while (1)
       ;
   }
-  LoRa.setSyncWord(0xF1);
+  // LoRa.setSyncWord(0xF1);
   Serial.println("LoRa Initializing Successful!");
+  cauhinh();
 }
 
 void loop()
 {
+  String message = "";
+  // String xacnhan = " OK";
   int packetSize = LoRa.parsePacket();
   if (packetSize)
   {
+    // received a packet
+    Serial.print("Received packet ");
+
+    // read packet
     while (LoRa.available())
     {
-      String DATA = LoRa.readString();
-      Serial.println(DATA);
-      int pos1 = DATA.indexOf('/');
-      readingID = DATA.substring(0, pos1);
-      du_lieu = DATA.substring(pos1 + 1);
+      message += (char)LoRa.read();
     }
-    if (readingID == "1")
+    if (message == "A")
     {
-      // float humii = du_lie.substring(0,2).toInt(); // Lấy 2 số đầu
-      float tempp = du_lieu.substring(0, 4).toFloat(); // Lấy 2 số cuối
-      float humii = du_lieu.substring(5).toFloat();
-      Serial.println("NODE 1 DATA:");
-      Serial.print("TEMP =   ");
-      Serial.println(tempp);
-      Serial.print("HUMI =   ");
-      Serial.println(humii);
-      int rssi = LoRa.packetRssi();
-      Serial.print("with RSSI: ");
-      Serial.println(rssi);
+      Serial.println(message);
+      Serial.print(" with RSSI ");
+      Serial.println(LoRa.packetRssi());
+      LoRa_sendMessage(); // send a message
     }
   }
-  Serial.println(Mess);
-  delay(1000);
+}
+void cauhinh()
+{
+
+  // Cấu hình 1: Bw = 125 kHz, Cr = 4/5, Sf = 128chips/symbol, CRC on.
+  // Default medium range; timmer 1byte ( 3s )
+  Serial.println("Cấu hình 1 (Default medium range): ");
+  Serial.print("BW: 125E3; CR: 4/5; SF: 7; ");
+  Serial.print("OP: ");
+  Serial.println(OP);
+
+  LoRa.setSignalBandwidth(125E3);
+  LoRa.setCodingRate4(5);
+  LoRa.setSpreadingFactor(7);
+  LoRa.enableCrc();
 }
